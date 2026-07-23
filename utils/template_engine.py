@@ -307,26 +307,24 @@ class TemplateEngine:
 
         text = f"Page {page_number}"
 
-        if cfg.get("align", "right") == "right":
+        page_width = self.config["page"]["width"]
+
+        x = page_width - cfg.get("padding_right", 40)
+
+        y = cfg.get("y", 20)
+
+        if cfg.get("align") == "right":
 
             self.canvas.drawRightString(
-
-                cfg["x"],
-
-                cfg["y"],
-
+                x,
+                y,
                 text
-
             )
 
         else:
 
             self.canvas.drawString(
-
-                cfg["x"],
-
-                cfg["y"],
-
+                x,
+                y,
                 text
-
             )

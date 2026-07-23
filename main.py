@@ -1,4 +1,5 @@
 import os
+import traceback
 import tempfile
 from typing import List
 
@@ -243,8 +244,9 @@ async def generate_pdf_api(
 
     except Exception as e:
 
-        if logo_path and os.path.exists(logo_path):
+        traceback.print_exc()
 
+        if logo_path and os.path.exists(logo_path):
             os.remove(logo_path)
 
         return JSONResponse(
@@ -253,7 +255,9 @@ async def generate_pdf_api(
 
             content={
 
-                "error": str(e)
+                "error": str(e),
+
+                "trace": traceback.format_exc()
 
             }
 
