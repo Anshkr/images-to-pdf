@@ -1,16 +1,14 @@
 from reportlab.lib.utils import ImageReader
+from reportlab.lib.colors import HexColor
 
 
 class TemplateEngine:
-
 
     def __init__(self, canvas, template):
 
         self.canvas = canvas
         self.template = template
         self.config = template["config"]
-
-
 
     # ----------------------------------------
     # Background
@@ -36,8 +34,6 @@ class TemplateEngine:
 
         )
 
-
-
     # ----------------------------------------
     # Logo
     # ----------------------------------------
@@ -50,16 +46,10 @@ class TemplateEngine:
         if not logo_path:
             return
 
-
-        cfg = self.config.get(
-            "logo"
-        )
-
+        cfg = self.config.get("logo")
 
         if not cfg:
             return
-
-
 
         self.canvas.drawImage(
 
@@ -71,13 +61,13 @@ class TemplateEngine:
 
             width=cfg["width"],
 
+            height=cfg.get("height"),
+
             preserveAspectRatio=True,
 
             mask="auto"
 
         )
-
-
 
     # ----------------------------------------
     # Company Name
@@ -88,24 +78,25 @@ class TemplateEngine:
         company
     ):
 
-        cfg = self.config.get(
-            "company_name"
-        )
-
+        cfg = self.config.get("company_name")
 
         if not cfg:
             return
 
-
+        self.canvas.setFillColor(
+            HexColor(cfg.get("color", "#000000"))
+        )
 
         self.canvas.setFont(
 
-            "Helvetica-Bold",
+            cfg.get(
+                "font",
+                "Helvetica-Bold"
+            ),
 
             cfg["font_size"]
 
         )
-
 
         self.canvas.drawString(
 
@@ -117,8 +108,6 @@ class TemplateEngine:
 
         )
 
-
-
     # ----------------------------------------
     # Website
     # ----------------------------------------
@@ -128,24 +117,25 @@ class TemplateEngine:
         website
     ):
 
-        cfg = self.config.get(
-            "website"
-        )
-
+        cfg = self.config.get("website")
 
         if not cfg:
             return
 
-
+        self.canvas.setFillColor(
+            HexColor(cfg.get("color", "#555555"))
+        )
 
         self.canvas.setFont(
 
-            "Helvetica",
+            cfg.get(
+                "font",
+                "Helvetica"
+            ),
 
             cfg["font_size"]
 
         )
-
 
         self.canvas.drawString(
 
@@ -157,10 +147,8 @@ class TemplateEngine:
 
         )
 
-
-
     # ----------------------------------------
-    # Multiple Images Grid
+    # Draw Images
     # ----------------------------------------
 
     def draw_images(
@@ -169,114 +157,34 @@ class TemplateEngine:
         images_per_page
     ):
 
+        layouts = self.config.get("layouts")
 
-        page_width = self.config["page"]["width"]
+        if not layouts:
+            return
 
-        page_height = self.config["page"]["height"]
+        boxes = layouts.get(str(images_per_page))
 
+        if not boxes:
+            return
 
-
-        margin = self.config["image"]["margin"]
-
-
-
-        # Determine Grid
-
-        layouts = {
-
-
-            1:(1,1),
-
-            2:(2,1),
-
-            3:(3,1),
-
-            4:(2,2),
-
-            6:(3,2),
-
-            9:(3,3)
-
-        }
-
-
-
-        cols, rows = layouts[images_per_page]
-
-
-
-        cell_width = (
-
-            page_width - (margin*2)
-
-        ) / cols
-
-
-
-        cell_height = (
-
-            page_height - (margin*2)
-
-        ) / rows
-
-
-
-        for index,image in enumerate(images):
-
-
-            if index >= images_per_page:
-
-                break
-
-
-
-            row = index // cols
-
-            col = index % cols
-
-
-
-            x = (
-
-                margin +
-
-                col * cell_width
-
-            )
-
-
-
-            y = (
-
-                page_height -
-
-                margin -
-
-                (row+1)*cell_height
-
-            )
-
-
+        for image, box in zip(images, boxes):
 
             self.draw_single_image(
 
-                image,
+                image=image,
 
-                x,
+                x=box["x"],
 
-                y,
+                y=box["y"],
 
-                cell_width,
+                box_width=box["width"],
 
-                cell_height
+                box_height=box["height"]
 
             )
 
-
-
-
     # ----------------------------------------
-    # Single Image
+    # Draw Single Image
     # ----------------------------------------
 
     def draw_single_image(
@@ -295,44 +203,21 @@ class TemplateEngine:
 
     ):
 
-
         img_width, img_height = image.size
-
-
 
         ratio = min(
 
-            box_width/img_width,
+            box_width / img_width,
 
-            box_height/img_height
+            box_height / img_height
 
         )
-
 
         new_width = img_width * ratio
-
         new_height = img_height * ratio
 
-
-
-        final_x = (
-
-            x +
-
-            (box_width-new_width)/2
-
-        )
-
-
-        final_y = (
-
-            y +
-
-            (box_height-new_height)/2
-
-        )
-
-
+        final_x = x + (box_width - new_width) / 2
+        final_y = y + (box_height - new_height) / 2
 
         self.canvas.drawImage(
 
@@ -351,3 +236,97 @@ class TemplateEngine:
             mask="auto"
 
         )
+
+    # ----------------------------------------
+    # Footer
+    # ----------------------------------------
+
+    def draw_footer(
+        self,
+        text
+    ):
+
+        cfg = self.config.get("footer")
+
+        if not cfg:
+            return
+
+        self.canvas.setFillColor(
+            HexColor(cfg.get("color", "#666666"))
+        )
+
+        self.canvas.setFont(
+
+            cfg.get(
+                "font",
+                "Helvetica"
+            ),
+
+            cfg["font_size"]
+
+        )
+
+        self.canvas.drawString(
+
+            cfg["x"],
+
+            cfg["y"],
+
+            text
+
+        )
+
+    # ----------------------------------------
+    # Page Number
+    # ----------------------------------------
+
+    def draw_page_number(
+        self,
+        page_number
+    ):
+
+        cfg = self.config.get("page_number")
+
+        if not cfg:
+            return
+
+        self.canvas.setFillColor(
+            HexColor(cfg.get("color", "#666666"))
+        )
+
+        self.canvas.setFont(
+
+            cfg.get(
+                "font",
+                "Helvetica"
+            ),
+
+            cfg["font_size"]
+
+        )
+
+        text = f"Page {page_number}"
+
+        if cfg.get("align", "right") == "right":
+
+            self.canvas.drawRightString(
+
+                cfg["x"],
+
+                cfg["y"],
+
+                text
+
+            )
+
+        else:
+
+            self.canvas.drawString(
+
+                cfg["x"],
+
+                cfg["y"],
+
+                text
+
+            )
