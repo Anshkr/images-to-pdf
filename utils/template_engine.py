@@ -17,12 +17,22 @@ class TemplateEngine:
     def draw_background(
         self,
         page_width,
-        page_height
+        page_height,
+        custom_background=None
     ):
+
+        # If user uploaded Canva template use it
+        if custom_background:
+
+            bg = custom_background
+
+        else:
+
+            bg = self.template["background"]
 
         self.canvas.drawImage(
 
-            self.template["background"],
+            bg,
 
             0,
 
@@ -30,7 +40,11 @@ class TemplateEngine:
 
             width=page_width,
 
-            height=page_height
+            height=page_height,
+
+            preserveAspectRatio=False,
+
+            mask="auto"
 
         )
 
@@ -84,7 +98,11 @@ class TemplateEngine:
             return
 
         self.canvas.setFillColor(
-            HexColor(cfg.get("color", "#000000"))
+
+            HexColor(
+                cfg.get("color", "#000000")
+            )
+
         )
 
         self.canvas.setFont(
@@ -123,7 +141,11 @@ class TemplateEngine:
             return
 
         self.canvas.setFillColor(
-            HexColor(cfg.get("color", "#555555"))
+
+            HexColor(
+                cfg.get("color", "#555555")
+            )
+
         )
 
         self.canvas.setFont(
@@ -148,7 +170,7 @@ class TemplateEngine:
         )
 
     # ----------------------------------------
-    # Draw Images
+    # Images
     # ----------------------------------------
 
     def draw_images(
@@ -184,7 +206,7 @@ class TemplateEngine:
             )
 
     # ----------------------------------------
-    # Draw Single Image
+    # Single Image
     # ----------------------------------------
 
     def draw_single_image(
@@ -214,10 +236,20 @@ class TemplateEngine:
         )
 
         new_width = img_width * ratio
+
         new_height = img_height * ratio
 
-        final_x = x + (box_width - new_width) / 2
-        final_y = y + (box_height - new_height) / 2
+        final_x = x + (
+
+            (box_width - new_width) / 2
+
+        )
+
+        final_y = y + (
+
+            (box_height - new_height) / 2
+
+        )
 
         self.canvas.drawImage(
 
@@ -251,8 +283,18 @@ class TemplateEngine:
         if not cfg:
             return
 
+        footer_text = cfg.get("text")
+
+        if footer_text:
+
+            text = footer_text
+
         self.canvas.setFillColor(
-            HexColor(cfg.get("color", "#666666"))
+
+            HexColor(
+                cfg.get("color", "#666666")
+            )
+
         )
 
         self.canvas.setFont(
@@ -291,7 +333,11 @@ class TemplateEngine:
             return
 
         self.canvas.setFillColor(
-            HexColor(cfg.get("color", "#666666"))
+
+            HexColor(
+                cfg.get("color", "#666666")
+            )
+
         )
 
         self.canvas.setFont(
@@ -309,22 +355,42 @@ class TemplateEngine:
 
         page_width = self.config["page"]["width"]
 
-        x = page_width - cfg.get("padding_right", 40)
+        x = page_width - cfg.get(
 
-        y = cfg.get("y", 20)
+            "padding_right",
+
+            40
+
+        )
+
+        y = cfg.get(
+
+            "y",
+
+            20
+
+        )
 
         if cfg.get("align") == "right":
 
             self.canvas.drawRightString(
+
                 x,
+
                 y,
+
                 text
+
             )
 
         else:
 
             self.canvas.drawString(
+
                 x,
+
                 y,
+
                 text
+
             )
