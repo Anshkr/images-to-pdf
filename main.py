@@ -103,21 +103,23 @@ async def generate_pdf_api(
 
         )
 
-    template = load_template(template_name)
+    if template_name != "custom":
+    
+        template = load_template(template_name)
 
-    if template is None:
+        if template is None:
 
-        return JSONResponse(
+            return JSONResponse(
 
-            status_code=400,
+                status_code=400,
 
-            content={
+                content={
 
-                "error":f"Template '{template_name}' not found."
+                    "error": f"Template '{template_name}' not found."
 
-            }
+                }
 
-        )
+            )
 
     logo_path = None
 
@@ -228,7 +230,7 @@ async def generate_pdf_api(
 
             template_name=template_name,
 
-            custom_background=template_path,
+            custom_background=custom_background,
 
             images_per_page=images_per_page,
 

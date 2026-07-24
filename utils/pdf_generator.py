@@ -11,9 +11,9 @@ def generate_pdf(
     website,
     logo_path,
     template_name,
+    custom_background,
     images_per_page,
     output_path,
-    custom_background=None
 ):
 
     # ------------------------------------------
@@ -33,6 +33,8 @@ def generate_pdf(
     # ------------------------------------------
 
     template = load_template(template_name)
+    if custom_background:
+        template["background"] = custom_background
 
     engine = TemplateEngine(
 
