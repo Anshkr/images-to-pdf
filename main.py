@@ -22,7 +22,7 @@ from utils.template_loader import load_template
 
 app = FastAPI(
     title="Dynamic Catalogue Generator API",
-    version="3.0.0"
+    version="3.1.0"
 )
 
 app.add_middleware(
@@ -61,7 +61,7 @@ def home():
 
         "project": "Dynamic Catalogue Generator",
 
-        "version": "3.0.0"
+        "version": "3.1.0"
 
     }
 
@@ -83,11 +83,13 @@ async def generate_pdf_api(
 
     logo: UploadFile | None = File(None),
 
+    template_file: UploadFile | None = File(None),
+
     images: List[UploadFile] = File(...)
 
 ):
 
-    if images_per_page not in [1, 2, 3, 4, 6, 9]:
+    if images_per_page not in [1,2,3,4,6,9]:
 
         return JSONResponse(
 
@@ -95,7 +97,7 @@ async def generate_pdf_api(
 
             content={
 
-                "error": "images_per_page must be one of: 1,2,3,4,6,9"
+                "error":"images_per_page must be one of: 1,2,3,4,6,9"
 
             }
 
@@ -111,13 +113,15 @@ async def generate_pdf_api(
 
             content={
 
-                "error": f"Template '{template_name}' not found."
+                "error":f"Template '{template_name}' not found."
 
             }
 
         )
 
     logo_path = None
+
+    template_path = None
 
     try:
 
@@ -142,6 +146,30 @@ async def generate_pdf_api(
             temp_logo.close()
 
             logo_path = temp_logo.name
+
+
+        # ------------------------------------------
+        # Save Uploaded Canva Template
+        # ------------------------------------------
+
+        if template_file and template_file.filename:
+
+            suffix = os.path.splitext(template_file.filename)[1]
+
+            temp_template = tempfile.NamedTemporaryFile(
+
+                suffix=suffix,
+
+                delete=False
+
+            )
+
+            temp_template.write(await template_file.read())
+
+            temp_template.close()
+
+            template_path = temp_template.name
+
 
         # ------------------------------------------
         # Process Images
@@ -169,13 +197,12 @@ async def generate_pdf_api(
 
                 content={
 
-                    "error": "No valid images uploaded."
+                    "error":"No valid images uploaded."
 
                 }
 
             )
-
-        # ------------------------------------------
+                    # ------------------------------------------
         # Generate PDF
         # ------------------------------------------
 
@@ -201,6 +228,8 @@ async def generate_pdf_api(
 
             template_name=template_name,
 
+            custom_background=template_path,
+
             images_per_page=images_per_page,
 
             output_path=pdf_path
@@ -215,14 +244,14 @@ async def generate_pdf_api(
 
                 content={
 
-                    "error": "PDF generation failed."
+                    "error":"PDF generation failed."
 
                 }
 
             )
 
         # ------------------------------------------
-        # Cleanup
+        # Auto Delete after 10 minutes
         # ------------------------------------------
 
         threading.Thread(
@@ -235,12 +264,20 @@ async def generate_pdf_api(
 
         ).start()
 
+        # ------------------------------------------
+        # Cleanup Temporary Files
+        # ------------------------------------------
+
         if logo_path and os.path.exists(logo_path):
 
             os.remove(logo_path)
 
+        if template_path and os.path.exists(template_path):
+
+            os.remove(template_path)
+
         # ------------------------------------------
-        # Return URLs
+        # Return Preview & Download URLs
         # ------------------------------------------
 
         return {
@@ -263,6 +300,10 @@ async def generate_pdf_api(
 
             os.remove(logo_path)
 
+        if template_path and os.path.exists(template_path):
+
+            os.remove(template_path)
+
         return JSONResponse(
 
             status_code=500,
@@ -276,9 +317,7 @@ async def generate_pdf_api(
             }
 
         )
-
-
-# --------------------------------------------------
+        # --------------------------------------------------
 # Preview PDF
 # --------------------------------------------------
 
@@ -301,7 +340,7 @@ def preview_pdf(job_id: str):
 
             content={
 
-                "error": "PDF not found."
+                "error":"PDF not found."
 
             }
 
@@ -339,7 +378,7 @@ def download_pdf(job_id: str):
 
             content={
 
-                "error": "PDF not found."
+                "error":"PDF not found."
 
             }
 
