@@ -32,7 +32,18 @@ def generate_pdf(
     # Load Selected Template
     # ------------------------------------------
 
-    template = load_template(template_name)
+    if template_name == "custom":
+    
+        # Use an existing template as the base layout
+        template = load_template("minimal")
+
+    else:
+
+        template = load_template(template_name)
+
+    if template is None:
+        raise Exception(f"Template '{template_name}' could not be loaded.")
+
     if custom_background:
         template["background"] = custom_background
 
@@ -78,7 +89,7 @@ def generate_pdf(
 
             PAGE_HEIGHT,
 
-            custom_background
+            
 
         )
 
