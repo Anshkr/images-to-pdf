@@ -121,7 +121,7 @@ async def generate_pdf_api(
 
     logo_path = None
 
-    template_path = None
+    custom_background = None
 
     try:
 
