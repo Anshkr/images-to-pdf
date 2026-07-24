@@ -1,4 +1,7 @@
 import os
+import uuid
+import time
+import threading
 import traceback
 import tempfile
 from typing import List
@@ -7,8 +10,7 @@ from fastapi import (
     FastAPI,
     UploadFile,
     File,
-    Form,
-    BackgroundTasks
+    Form
 )
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +22,7 @@ from utils.template_loader import load_template
 
 app = FastAPI(
     title="Dynamic Catalogue Generator API",
-    version="2.2.0"
+    version="3.0.0"
 )
 
 app.add_middleware(
@@ -29,6 +31,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+os.makedirs("generated", exist_ok=True)
+
+
+# --------------------------------------------------
+# Auto Delete PDF after 10 minutes
+# --------------------------------------------------
+
+def delete_pdf(path):
+
+    time.sleep(600)
+
+    if os.path.exists(path):
+
+        os.remove(path)
 
 
 # --------------------------------------------------
@@ -39,20 +56,22 @@ app.add_middleware(
 def home():
 
     return {
+
         "status": "running",
+
         "project": "Dynamic Catalogue Generator",
-        "version": "2.2.0"
+
+        "version": "3.0.0"
+
     }
 
 
 # --------------------------------------------------
-# Generate Catalogue PDF
+# Generate PDF
 # --------------------------------------------------
 
 @app.post("/api/generate-pdf")
 async def generate_pdf_api(
-
-    background_tasks: BackgroundTasks,
 
     company_name: str = Form(...),
 
@@ -68,10 +87,6 @@ async def generate_pdf_api(
 
 ):
 
-    # --------------------------------------------------
-    # Validate Images Per Page
-    # --------------------------------------------------
-
     if images_per_page not in [1, 2, 3, 4, 6, 9]:
 
         return JSONResponse(
@@ -85,10 +100,6 @@ async def generate_pdf_api(
             }
 
         )
-
-    # --------------------------------------------------
-    # Validate Template
-    # --------------------------------------------------
 
     template = load_template(template_name)
 
@@ -110,9 +121,9 @@ async def generate_pdf_api(
 
     try:
 
-        # --------------------------------------------------
-        # Save Logo Temporarily
-        # --------------------------------------------------
+        # ------------------------------------------
+        # Save Logo
+        # ------------------------------------------
 
         if logo and logo.filename:
 
@@ -132,9 +143,9 @@ async def generate_pdf_api(
 
             logo_path = temp_logo.name
 
-        # --------------------------------------------------
-        # Process Images (Memory Only)
-        # --------------------------------------------------
+        # ------------------------------------------
+        # Process Images
+        # ------------------------------------------
 
         processed_images = []
 
@@ -144,13 +155,11 @@ async def generate_pdf_api(
 
                 continue
 
-            processed = process_image(image)
+            processed_images.append(
 
-            processed_images.append(processed)
+                process_image(image)
 
-        # --------------------------------------------------
-        # No Images
-        # --------------------------------------------------
+            )
 
         if len(processed_images) == 0:
 
@@ -166,11 +175,21 @@ async def generate_pdf_api(
 
             )
 
-        # --------------------------------------------------
+        # ------------------------------------------
         # Generate PDF
-        # --------------------------------------------------
+        # ------------------------------------------
 
-        pdf_path = generate_pdf(
+        job_id = str(uuid.uuid4())
+
+        pdf_path = os.path.join(
+
+            "generated",
+
+            f"{job_id}.pdf"
+
+        )
+
+        generate_pdf(
 
             images=processed_images,
 
@@ -182,13 +201,11 @@ async def generate_pdf_api(
 
             template_name=template_name,
 
-            images_per_page=images_per_page
+            images_per_page=images_per_page,
+
+            output_path=pdf_path
 
         )
-
-        # --------------------------------------------------
-        # Verify PDF
-        # --------------------------------------------------
 
         if not os.path.exists(pdf_path):
 
@@ -204,49 +221,46 @@ async def generate_pdf_api(
 
             )
 
-        # --------------------------------------------------
-        # Cleanup After Response
-        # --------------------------------------------------
+        # ------------------------------------------
+        # Cleanup
+        # ------------------------------------------
 
-        if logo_path:
+        threading.Thread(
 
-            background_tasks.add_task(
+            target=delete_pdf,
 
-                os.remove,
+            args=(pdf_path,),
 
-                logo_path
+            daemon=True
 
-            )
+        ).start()
 
-        background_tasks.add_task(
+        if logo_path and os.path.exists(logo_path):
 
-            os.remove,
+            os.remove(logo_path)
 
-            pdf_path
+        # ------------------------------------------
+        # Return URLs
+        # ------------------------------------------
 
-        )
+        return {
 
-        # --------------------------------------------------
-        # Return PDF
-        # --------------------------------------------------
+            "success": True,
 
-        return FileResponse(
+            "job_id": job_id,
 
-            path=pdf_path,
+            "preview_url": f"/api/preview/{job_id}",
 
-            media_type="application/pdf",
+            "download_url": f"/api/download/{job_id}"
 
-            filename="catalogue.pdf",
-
-            background=background_tasks
-
-        )
+        }
 
     except Exception as e:
 
         traceback.print_exc()
 
         if logo_path and os.path.exists(logo_path):
+
             os.remove(logo_path)
 
         return JSONResponse(
@@ -262,3 +276,81 @@ async def generate_pdf_api(
             }
 
         )
+
+
+# --------------------------------------------------
+# Preview PDF
+# --------------------------------------------------
+
+@app.get("/api/preview/{job_id}")
+def preview_pdf(job_id: str):
+
+    pdf_path = os.path.join(
+
+        "generated",
+
+        f"{job_id}.pdf"
+
+    )
+
+    if not os.path.exists(pdf_path):
+
+        return JSONResponse(
+
+            status_code=404,
+
+            content={
+
+                "error": "PDF not found."
+
+            }
+
+        )
+
+    return FileResponse(
+
+        path=pdf_path,
+
+        media_type="application/pdf"
+
+    )
+
+
+# --------------------------------------------------
+# Download PDF
+# --------------------------------------------------
+
+@app.get("/api/download/{job_id}")
+def download_pdf(job_id: str):
+
+    pdf_path = os.path.join(
+
+        "generated",
+
+        f"{job_id}.pdf"
+
+    )
+
+    if not os.path.exists(pdf_path):
+
+        return JSONResponse(
+
+            status_code=404,
+
+            content={
+
+                "error": "PDF not found."
+
+            }
+
+        )
+
+    return FileResponse(
+
+        path=pdf_path,
+
+        media_type="application/pdf",
+
+        filename="catalogue.pdf"
+
+    )
