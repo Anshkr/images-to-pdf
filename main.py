@@ -120,6 +120,21 @@ async def generate_pdf_api(
                 }
 
             )
+    if template_name == "custom":
+    
+        if not template_file or not template_file.filename:
+
+            return JSONResponse(
+
+                status_code=400,
+
+                content={
+
+                    "error": "Please upload a custom template image."
+
+                }
+
+            )
 
     logo_path = None
 
@@ -154,23 +169,23 @@ async def generate_pdf_api(
         # Save Uploaded Canva Template
         # ------------------------------------------
 
-        if template_file and template_file.filename:
+        if (
+            template_name == "custom"
+            and template_file
+            and template_file.filename
+        ):
 
             suffix = os.path.splitext(template_file.filename)[1]
 
             temp_template = tempfile.NamedTemporaryFile(
-
                 suffix=suffix,
-
                 delete=False
-
             )
 
             temp_template.write(await template_file.read())
-
             temp_template.close()
 
-            template_path = temp_template.name
+            custom_background = temp_template.name
 
 
         # ------------------------------------------
@@ -274,9 +289,9 @@ async def generate_pdf_api(
 
             os.remove(logo_path)
 
-        if template_path and os.path.exists(template_path):
-
-            os.remove(template_path)
+        if custom_background and os.path.exists(custom_background):
+    
+            os.remove(custom_background)
 
         # ------------------------------------------
         # Return Preview & Download URLs
@@ -302,9 +317,9 @@ async def generate_pdf_api(
 
             os.remove(logo_path)
 
-        if template_path and os.path.exists(template_path):
+        if custom_background and os.path.exists(custom_background):
 
-            os.remove(template_path)
+            os.remove(custom_background)
 
         return JSONResponse(
 
