@@ -25,8 +25,7 @@ load_dotenv()
 
 origins = os.getenv(
     "ALLOWED_ORIGINS",
-    "https://pdfplus.in",
-    "https://www.pdfplus.in"
+    "https://pdfplus.in,https://www.pdfplus.in"
 ).split(",")
 
 app = FastAPI(
