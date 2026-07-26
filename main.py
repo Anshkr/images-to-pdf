@@ -1,4 +1,5 @@
 import os
+import logging
 import uuid
 import time
 import threading
@@ -19,6 +20,14 @@ from utils.validator import validate_image
 from utils.image_processor import process_image
 from utils.pdf_generator import generate_pdf
 from utils.template_loader import load_template
+from dotenv import load_dotenv
+load_dotenv()
+
+origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "https://pdfplus.in",
+    "https://www.pdfplus.in"
+).split(",")
 
 app = FastAPI(
     title="Dynamic Catalogue Generator API",
@@ -27,7 +36,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -41,7 +51,9 @@ os.makedirs("generated", exist_ok=True)
 
 def delete_pdf(path):
 
-    time.sleep(600)
+    DELETE_TIME = int(os.getenv("PDF_DELETE_TIME", "600"))
+
+    time.sleep(DELETE_TIME)
 
     if os.path.exists(path):
 
@@ -61,7 +73,7 @@ def home():
 
         "project": "Dynamic Catalogue Generator",
 
-        "version": "3.1.0"
+        version=os.getenv("APP_VERSION", "3.1.0")
 
     }
 
@@ -311,7 +323,7 @@ async def generate_pdf_api(
 
     except Exception as e:
 
-        traceback.print_exc()
+        logging.error(traceback.format_exc())
 
         if logo_path and os.path.exists(logo_path):
 

@@ -6,6 +6,7 @@ ALLOWED_EXTENSIONS = {
     ".png",
     ".webp"
 }
+MAX_IMAGE_SIZE = 10 * 1024 * 1024
 
 
 def validate_image(file: UploadFile):

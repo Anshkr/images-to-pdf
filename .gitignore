@@ -1,8 +1,16 @@
 __pycache__/
 *.pyc
+
+generated/
+temp/
+uploads/
+
 .env
-.vscode/
+
+venv/
+.venv/
 
 .idea/
+.vscode/
 
-*.pdf
+*.log
