@@ -230,7 +230,7 @@ async def generate_pdf_api(
                 }
 
             )
-                    # ------------------------------------------
+        # ------------------------------------------
         # Generate PDF
         # ------------------------------------------
 
@@ -243,6 +243,7 @@ async def generate_pdf_api(
             f"{job_id}.pdf"
 
         )
+        print("Received template_name:", template_name)
 
         generate_pdf(
 

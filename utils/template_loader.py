@@ -12,16 +12,20 @@ TEMPLATE_DIR = os.path.join(
 
 
 def load_template(template_name):
+    print("=" * 50)
+    print("Loading template:", template_name)
 
     folder = os.path.join(
         TEMPLATE_DIR,
         template_name
     )
+    print("Folder:", folder)
 
     background = os.path.join(
         folder,
         "background.png"
     )
+    print("Background:", background)
 
     config = os.path.join(
         folder,
@@ -37,6 +41,9 @@ def load_template(template_name):
     with open(config, "r") as f:
 
         data = json.load(f)
+    print("Exists background:", os.path.exists(background))
+    print("Exists config:", os.path.exists(config))
+    print("=" * 50)
 
     return {
         "background": background,
