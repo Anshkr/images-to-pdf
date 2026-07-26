@@ -41,10 +41,6 @@ def generate_pdf(
     else:
 
         template = load_template(template_name)
-        print("=" * 50)
-        print("Template requested :", template_name)
-        print("Background loaded  :", template["background"])
-        print("=" * 50)
 
     if template is None:
         raise Exception(f"Template '{template_name}' could not be loaded.")
