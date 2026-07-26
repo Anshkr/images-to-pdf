@@ -73,7 +73,7 @@ def home():
 
         "project": "Dynamic Catalogue Generator",
 
-        version=os.getenv("APP_VERSION", "3.1.0")
+        "version": os.getenv("APP_VERSION", "3.1.0")
 
     }
 
