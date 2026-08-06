@@ -268,6 +268,35 @@ class TemplateEngine:
             mask="auto"
 
         )
+        # ----------------------------------------
+        # Product Name Placeholder
+        # ----------------------------------------
+        label_y = final_y - 18
+        if label_y < 25:
+            label_y = 25
+        self.canvas.setFillColor(HexColor("#000000"))
+        self.canvas.setFont("Helvetica-Bold", 10)
+
+        self.canvas.drawString(
+            final_x,
+
+            label_y,
+
+            "Product Name"
+
+        )
+        self.canvas.line(
+            final_x,
+
+            label_y - 3,
+
+            final_x + new_width,
+
+            label_y - 3
+            
+        )
+
+
 
     # ----------------------------------------
     # Footer
