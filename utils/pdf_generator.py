@@ -1,9 +1,14 @@
 import os
 from reportlab.pdfgen import canvas
+from pypdf import PdfReader, PdfWriter
+import tempfile
+
 
 from utils.constants import *
 from utils.template_loader import load_template
 from utils.template_engine import TemplateEngine
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def generate_pdf(
@@ -55,7 +60,32 @@ def generate_pdf(
         template
 
     )
-
+    
+    # ------------------------------------------
+    # Fixed Cover Page (Page 1)
+    # ------------------------------------------
+    c.drawImage(
+        "assets/cover_page1.png",
+        0,
+        0,
+        width=PAGE_WIDTH,
+        height=PAGE_HEIGHT
+    )
+    
+    c.showPage()
+    
+    # ------------------------------------------
+    # Fixed Intro Page (Page 2)
+    # ------------------------------------------
+    c.drawImage(
+        "assets/cover_page2.png",
+        0,
+        0,
+        width=PAGE_WIDTH,
+        height=PAGE_HEIGHT
+    )
+    c.showPage()
+    
     total_images = len(images)
 
     page_number = 1
@@ -166,5 +196,37 @@ def generate_pdf(
     # ------------------------------------------
 
     c.save()
+    
+    # ------------------------------------------
+    # Merge Cover PDF + Generated Catalogue
+    # ------------------------------------------
+
+    cover_pdf = os.path.join(
+        BASE_DIR,
+        "templates",
+        "cover",
+        "cover.pdf"
+    )
+
+    if os.path.exists(cover_pdf):
+
+        writer = PdfWriter()
+
+        # Add cover pages
+        cover_reader = PdfReader(cover_pdf)
+        for page in cover_reader.pages:
+            writer.add_page(page)
+
+        # Add generated catalogue pages
+        catalogue_reader = PdfReader(output_path)
+        for page in catalogue_reader.pages:
+            writer.add_page(page)
+
+        temp_output = output_path + ".tmp"
+
+        with open(temp_output, "wb") as f:
+            writer.write(f)
+
+        os.replace(temp_output, output_path)
 
     return output_path
