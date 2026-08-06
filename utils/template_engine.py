@@ -277,9 +277,11 @@ class TemplateEngine:
         self.canvas.setFillColor(HexColor("#000000"))
         
         # Position on the "Product Name ______" line
-        text_y = y - 2      # adjust between -5 and +5 if needed
+        text_x = x
+
+        text_y = y + box_height - 12
         self.canvas.drawString(
-            x,
+            text_x,
             text_y,
             product_name
         )
@@ -298,7 +300,7 @@ class TemplateEngine:
 
             label_y,
 
-            "Product Name"
+            
 
         )
         self.canvas.line(
