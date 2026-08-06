@@ -273,19 +273,7 @@ class TemplateEngine:
 
         )
         
-        self.canvas.setFont("Helvetica-Bold", 10)
-        self.canvas.setFillColor(HexColor("#000000"))
-        
-        # Position on the "Product Name ______" line
-        text_x = x
-
-        text_y = y + box_height - 12
-        self.canvas.drawString(
-            text_x,
-            text_y,
-            product_name
-        )
-        
+               
         # ----------------------------------------
         # Product Name Placeholder
         # ----------------------------------------
