@@ -61,30 +61,6 @@ def generate_pdf(
 
     )
     
-    # ------------------------------------------
-    # Fixed Cover Page (Page 1)
-    # ------------------------------------------
-    c.drawImage(
-        "assets/cover_page1.png",
-        0,
-        0,
-        width=PAGE_WIDTH,
-        height=PAGE_HEIGHT
-    )
-    
-    c.showPage()
-    
-    # ------------------------------------------
-    # Fixed Intro Page (Page 2)
-    # ------------------------------------------
-    c.drawImage(
-        "assets/cover_page2.png",
-        0,
-        0,
-        width=PAGE_WIDTH,
-        height=PAGE_HEIGHT
-    )
-    c.showPage()
     
     total_images = len(images)
 
