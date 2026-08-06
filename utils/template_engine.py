@@ -276,9 +276,11 @@ class TemplateEngine:
         self.canvas.setFont("Helvetica-Bold", 10)
         self.canvas.setFillColor(HexColor("#000000"))
         
-        self.canvas.drawCentredString(
-            x + box_width / 2,
-            y - 15,
+        # Position on the "Product Name ______" line
+        text_y = y - 2      # adjust between -5 and +5 if needed
+        self.canvas.drawString(
+            x,
+            text_y,
             product_name
         )
         
