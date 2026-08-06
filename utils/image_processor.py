@@ -1,3 +1,4 @@
+import os
 from PIL import Image, ImageOps
 from io import BytesIO
 
@@ -17,4 +18,7 @@ def process_image(upload_file):
 
     image = smart_resize(image)
 
-    return image
+    return {
+        "image": image,
+        "name": os.path.splitext(upload_file.filename)[0]
+    }

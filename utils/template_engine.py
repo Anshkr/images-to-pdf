@@ -189,11 +189,13 @@ class TemplateEngine:
         if not boxes:
             return
 
-        for image, box in zip(images, boxes):
+        for item, box in zip(images, boxes):
 
             self.draw_single_image(
 
-                image=image,
+                image=item["image"],
+                
+                product_name=item["name"],
 
                 x=box["x"],
 
@@ -214,6 +216,8 @@ class TemplateEngine:
         self,
 
         image,
+        
+        product_name,
 
         x,
 
@@ -268,6 +272,16 @@ class TemplateEngine:
             mask="auto"
 
         )
+        
+        self.canvas.setFont("Helvetica-Bold", 10)
+        self.canvas.setFillColor(HexColor("#000000"))
+        
+        self.canvas.drawCentredString(
+            x + box_width / 2,
+            y - 15,
+            product_name
+        )
+        
         # ----------------------------------------
         # Product Name Placeholder
         # ----------------------------------------
