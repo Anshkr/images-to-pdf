@@ -7,3 +7,4 @@ numpy
 opencv-python-headless
 python-dotenv
 pypdf
+openai>=1.40.0
