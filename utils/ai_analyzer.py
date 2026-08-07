@@ -17,7 +17,13 @@ MODEL = "openrouter/free"
 
 def analyze_product(image_path, original_name=None):
 
-    
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        raise Exception("OPENROUTER_API_KEY is missing.")
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://openrouter.ai/api/v1",
+    )
 
     fallback_name = (
         original_name
