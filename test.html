@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catalogue Generator Test</title>
+
+<style>
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f4f4f4;
+    padding:40px;
+}
+
+.container{
+    max-width:700px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:10px;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+h2{
+    text-align:center;
+}
+
+label{
+    display:block;
+    margin-top:15px;
+    font-weight:bold;
+}
+
+input,select{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    margin-top:25px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    cursor:pointer;
+    font-size:16px;
+    border-radius:6px;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+#result{
+    margin-top:25px;
+    padding:15px;
+    background:#eef;
+    display:none;
+}
+
+a{
+    display:block;
+    margin-top:10px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h2>Catalogue Generator API Test</h2>
+
+<form id="pdfForm">
+
+<label>Company Name</label>
+<input type="text" name="company_name" value="PDF Plus" required>
+
+<label>Website</label>
+<input type="text" name="website" value="www.pdfplus.in">
+
+<label>Template</label>
+<select name="template_name">
+<option value="minimal">Minimal</option>
+<option value="modern">Modern</option>
+<option value="premium">Premium</option>
+<option value="custom">Custom</option>
+</select>
+
+<label>Images Per Page</label>
+<select name="images_per_page">
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+<option>6</option>
+<option>9</option>
+</select>
+
+<label>Logo</label>
+<input type="file" name="logo">
+
+<label>Custom Background (only for custom template)</label>
+<input type="file" name="template_file">
+
+<label>Product Images</label>
+<input
+type="file"
+name="images"
+multiple
+required
+>
+
+<button type="submit">
+Generate Catalogue
+</button>
+
+</form>
+
+<div id="result">
+<h3>Success!</h3>
+
+<a id="preview" target="_blank">
+Preview PDF
+</a>
+
+<a id="download" target="_blank">
+Download PDF
+</a>
+
+</div>
+
+</div>
+
+<script>
+
+const API="http://127.0.0.1:8000";
+
+document.getElementById("pdfForm").addEventListener("submit",async(e)=>{
+
+e.preventDefault();
+
+const form=e.target;
+
+const data=new FormData();
+
+data.append(
+"company_name",
+form.company_name.value
+);
+
+data.append(
+"website",
+form.website.value
+);
+
+data.append(
+"template_name",
+form.template_name.value
+);
+
+data.append(
+"images_per_page",
+form.images_per_page.value
+);
+
+// Logo
+
+if(form.logo.files.length>0){
+
+data.append(
+"logo",
+form.logo.files[0]
+);
+
+}
+
+// Custom template
+
+if(form.template_file.files.length>0){
+
+data.append(
+"template_file",
+form.template_file.files[0]
+);
+
+}
+
+// Images
+
+for(const file of form.images.files){
+
+data.append(
+"images",
+file
+);
+
+}
+
+try{
+
+const res=await fetch(
+API+"/api/generate-pdf",
+{
+method:"POST",
+body:data
+}
+);
+
+const json=await res.json();
+
+console.log(json);
+
+if(!json.success){
+
+alert(JSON.stringify(json,null,2));
+
+return;
+
+}
+
+document.getElementById("result").style.display="block";
+
+document.getElementById("preview").href=
+API+json.preview_url;
+
+document.getElementById("download").href=
+API+json.download_url;
+
+}
+catch(err){
+
+console.error(err);
+
+alert(err);
+
+}
+
+});
+
+</script>
+
+</body>
+</html>

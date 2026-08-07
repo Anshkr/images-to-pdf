@@ -6,6 +6,10 @@ import threading
 import traceback
 import tempfile
 from typing import List
+from utils.image_analyzer import analyze
+from utils.ai_analyzer import analyze_product
+import inspect
+
 
 from fastapi import (
     FastAPI,
@@ -208,28 +212,72 @@ async def generate_pdf_api(
         for image in images:
 
             if not validate_image(image):
-
                 continue
 
-            processed_images.append(
+            # Process image
+            processed = process_image(image)
 
-                process_image(image)
+            processed_image = processed["image"]
+            product_name = processed["name"]
 
+            # Save temporary image
+            temp_image = tempfile.NamedTemporaryFile(
+                suffix=".jpg",
+                delete=False
             )
 
-        if len(processed_images) == 0:
+            processed_image.save(temp_image.name)
+            temp_image.close()
 
-            return JSONResponse(
-
-                status_code=400,
-
-                content={
-
-                    "error":"No valid images uploaded."
-
+            # AI Analysis
+            details = analyze_product(temp_image.name,original_name=product_name)
+            
+            # Fallback to original uploaded filename
+            if not details.get("product_name"):
+                details["product_name"] = product_name.replace("_", " ").replace("-", " ").title()
+            
+            if not details.get("description"):
+                details["description"] = f"Premium quality {details['product_name'].lower()}."
+            
+            if not details.get("category"):
+                details["category"] = "General"
+                
+            if not details.get("material"):
+                details["material"] = "Unknown"
+            
+            if not details.get("color"):
+                details["color"] = "Unknown"
+            
+            
+            # If AI doesn't return a name, use filename
+            if isinstance(details, dict):
+                if not details.get("product_name"):
+                    details["product_name"] = product_name
+                    details.setdefault("category", "")
+                    details.setdefault("material", "")
+                    details.setdefault("color", "")
+                    details.setdefault("description", "")
+            else:
+                details = {
+                    "product_name": product_name,
+                    "description": str(details)
                 }
 
+            # Create Product object
+            product = analyze(
+                processed_image,
+                image.filename,
+                details
             )
+            
+            
+
+            processed_images.append(product)
+
+            # Delete temp image
+            if os.path.exists(temp_image.name):
+                os.remove(temp_image.name)
+                
         # ------------------------------------------
         # Generate PDF
         # ------------------------------------------
@@ -243,7 +291,7 @@ async def generate_pdf_api(
             f"{job_id}.pdf"
 
         )
-        print("Received template_name:", template_name)
+        
 
         generate_pdf(
 

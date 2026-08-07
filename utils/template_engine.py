@@ -1,6 +1,8 @@
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.colors import HexColor
-
+from utils.layout_engine import LayoutEngine
+from textwrap import wrap
+import os
 
 class TemplateEngine:
 
@@ -175,27 +177,19 @@ class TemplateEngine:
 
     def draw_images(
         self,
-        images,
+        products,
         images_per_page
     ):
 
-        layouts = self.config.get("layouts")
+        layout_engine = LayoutEngine()
 
-        if not layouts:
-            return
+        layout = layout_engine.generate_layout(products)
 
-        boxes = layouts.get(str(images_per_page))
-
-        if not boxes:
-            return
-
-        for item, box in zip(images, boxes):
+        for product, box in zip(products, layout):
 
             self.draw_single_image(
 
-                image=item["image"],
-                
-                product_name=item["name"],
+                product=product,
 
                 x=box["x"],
 
@@ -212,208 +206,177 @@ class TemplateEngine:
     # ----------------------------------------
 
     def draw_single_image(
-
         self,
-
-        image,
-        
-        product_name,
-
+        product,
         x,
-
         y,
-
         box_width,
-
         box_height
-
     ):
+
+        image = product.image
+        product_name = (
+            product.product_name.strip()
+            if product.product_name
+            else os.path.splitext(product.filename)[0].replace("_", " ").title()
+        )
+        description = (
+            product.description.strip()
+            if product.description
+            else "No AI description available"
+        )
+
+        # ----------------------------------------
+        # Shadow
+        # ----------------------------------------
+
+        self.canvas.setFillColor(HexColor("#EAEAEA"))
+
+        self.canvas.roundRect(
+            x + 3,
+            y - 3,
+            box_width,
+            box_height,
+            10,
+            fill=1,
+            stroke=0
+        )
+
+        # ----------------------------------------
+        # Card
+        # ----------------------------------------
+
+        self.canvas.setFillColor(HexColor("#FFFFFF"))
+        self.canvas.setStrokeColor(HexColor("#DDDDDD"))
+
+        self.canvas.roundRect(
+            x,
+            y,
+            box_width,
+            box_height,
+            10,
+            fill=1,
+            stroke=1
+        )
+
+        # ----------------------------------------
+        # Image Area
+        # ----------------------------------------
+
+        CARD_PADDING = 15
+        TOP_TEXT = 45
+        BOTTOM_TEXT = 95
+
+        image_x = x + CARD_PADDING
+        image_y = y + BOTTOM_TEXT
+
+        image_width = box_width - (CARD_PADDING * 2)
+        image_height = box_height - TOP_TEXT - BOTTOM_TEXT
 
         img_width, img_height = image.size
 
         ratio = min(
-
-            box_width / img_width,
-
-            box_height / img_height
-
+            image_width / img_width,
+            image_height / img_height
         )
 
         new_width = img_width * ratio
-
         new_height = img_height * ratio
 
-        final_x = x + (
+        final_x = image_x + (image_width - new_width) / 2
+        final_y = image_y + (image_height - new_height) / 2
 
-            (box_width - new_width) / 2
-
-        )
-
-        final_y = y + (
-
-            (box_height - new_height) / 2
-
-        )
+        # ----------------------------------------
+        # Draw Image
+        # ----------------------------------------
 
         self.canvas.drawImage(
-
             ImageReader(image),
-
             final_x,
-
             final_y,
-
             width=new_width,
-
             height=new_height,
-
             preserveAspectRatio=True,
-
             mask="auto"
-
         )
-        
-               
-        # ----------------------------------------
-        # Product Name Placeholder
-        # ----------------------------------------
-        self.canvas.setFont("Helvetica-Bold", 10)
-        self.canvas.setFillColor(HexColor("#000000"))
-        
 
-        text_x = x
-        text_y = y - 15
-        
-        self.canvas.drawString(
-            text_x,
-            text_y,
-            product_name
+        # ----------------------------------------
+        # Divider
+        # ----------------------------------------
+
+        divider_y = y + 38
+
+        self.canvas.setStrokeColor(HexColor("#EEEEEE"))
+
+        self.canvas.line(
+            x + 12,
+            divider_y,
+            x + box_width - 12,
+            divider_y
         )
-          
 
-        
-    # ----------------------------------------
-    # Footer
-    # ----------------------------------------
+        # ----------------------------------------
+        # Product Name
+        # ----------------------------------------
 
-    def draw_footer(
-        self,
-        text
-    ):
+        self.canvas.setFillColor(HexColor("#222222"))
+        self.canvas.setFont("Helvetica-Bold", 11)
 
-        cfg = self.config.get("footer")
+        name_lines = wrap(product_name, width=22)
 
-        if not cfg:
-            return
+        text_y = y + 22
 
-        footer_text = cfg.get("text")
-
-        if footer_text:
-
-            text = footer_text
-
-        self.canvas.setFillColor(
-
-            HexColor(
-                cfg.get("color", "#666666")
+        for line in reversed(name_lines[:2]):
+            self.canvas.drawCentredString(
+                x + box_width / 2,
+                text_y,
+                line
             )
+            text_y += 12
 
-        )
+        # ----------------------------------------
+        # Description
+        # ----------------------------------------
 
-        self.canvas.setFont(
+        self.canvas.setFillColor(HexColor("#666666"))
+        self.canvas.setFont("Helvetica", 8)
 
-            cfg.get(
-                "font",
-                "Helvetica"
-            ),
+        desc_lines = wrap(description, width=34)
 
-            cfg["font_size"]
+        desc_y = y + 8
 
-        )
-
-        self.canvas.drawString(
-
-            cfg["x"],
-
-            cfg["y"],
-
-            text
-
-        )
-
-    # ----------------------------------------
-    # Page Number
-    # ----------------------------------------
-
-    def draw_page_number(
-        self,
-        page_number
-    ):
-
+        for line in reversed(desc_lines[:2]):
+            self.canvas.drawCentredString(
+                x + box_width / 2,
+                desc_y,
+                line
+            )
+            desc_y += 10
+    
+    def draw_page_number(self, page_number):
+    
         cfg = self.config.get("page_number")
 
         if not cfg:
             return
 
         self.canvas.setFillColor(
-
-            HexColor(
-                cfg.get("color", "#666666")
-            )
-
+            HexColor(cfg.get("color", "#666666"))
         )
 
         self.canvas.setFont(
-
-            cfg.get(
-                "font",
-                "Helvetica"
-            ),
-
-            cfg["font_size"]
-
+            cfg.get("font", "Helvetica"),
+            cfg.get("font_size", 10)
         )
 
         text = f"Page {page_number}"
 
         page_width = self.config["page"]["width"]
 
-        x = page_width - cfg.get(
-
-            "padding_right",
-
-            40
-
-        )
-
-        y = cfg.get(
-
-            "y",
-
-            20
-
-        )
+        x = page_width - cfg.get("padding_right", 40)
+        y = cfg.get("y", 20)
 
         if cfg.get("align") == "right":
-
-            self.canvas.drawRightString(
-
-                x,
-
-                y,
-
-                text
-
-            )
-
+            self.canvas.drawRightString(x, y, text)
         else:
-
-            self.canvas.drawString(
-
-                x,
-
-                y,
-
-                text
-
-            )
+            self.canvas.drawString(x, y, text)
