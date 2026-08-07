@@ -264,7 +264,7 @@ class TemplateEngine:
         # ----------------------------------------
 
         CARD_PADDING = 15
-        TOP_TEXT = 45
+        TOP_TEXT = 20
         BOTTOM_TEXT = 95
 
         image_x = x + CARD_PADDING
@@ -304,7 +304,7 @@ class TemplateEngine:
         # Divider
         # ----------------------------------------
 
-        divider_y = y + 38
+        divider_y = y + 58
 
         self.canvas.setStrokeColor(HexColor("#EEEEEE"))
 
@@ -322,17 +322,18 @@ class TemplateEngine:
         self.canvas.setFillColor(HexColor("#222222"))
         self.canvas.setFont("Helvetica-Bold", 11)
 
-        name_lines = wrap(product_name, width=22)
+        name_lines = wrap(product_name, width=20)
 
-        text_y = y + 22
+        text_y = y + 48
+        self.canvas.setFont("Helvetica-Bold", 11)
 
-        for line in reversed(name_lines[:2]):
+        for line in name_lines[:2]:
             self.canvas.drawCentredString(
                 x + box_width / 2,
                 text_y,
                 line
             )
-            text_y += 12
+            text_y -= 13
 
         # ----------------------------------------
         # Description
@@ -343,15 +344,16 @@ class TemplateEngine:
 
         desc_lines = wrap(description, width=34)
 
-        desc_y = y + 8
+        desc_y = y + 20
+        self.canvas.setFont("Helvetica", 8)
 
-        for line in reversed(desc_lines[:2]):
+        for line in desc_lines[:2]:
             self.canvas.drawCentredString(
                 x + box_width / 2,
                 desc_y,
                 line
             )
-            desc_y += 10
+            desc_y -= 10
     
     def draw_page_number(self, page_number):
     
